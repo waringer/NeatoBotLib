@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
@@ -137,7 +138,12 @@ func makeAuth(rob Robot, commandData []byte) (string, string, string) {
 func Auth(URL string, Username string, Password string) (retValue AuthResponse) {
 	token, _ := randomHex(32)
 
-	authResp, _ := http.PostForm(URL+"sessions", url.Values{"platform": {"ios"}, "email": {Username}, "token": {token}, "password": {Password}})
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
+	authResp, _ := client.PostForm(URL+"sessions", url.Values{"platform": {"ios"}, "email": {Username}, "token": {token}, "password": {Password}})
 
 	defer authResp.Body.Close()
 
@@ -146,10 +152,14 @@ func Auth(URL string, Username string, Password string) (retValue AuthResponse) 
 }
 
 func GetDashboard(URL string, Auth AuthResponse) (retValue DashResponse) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
 	dashReq, _ := http.NewRequest("GET", URL+"dashboard", nil)
 	dashReq.Header.Add("Authorization", "Token token="+Auth.AccessToken)
 
-	client := &http.Client{}
 	dashResp, _ := client.Do(dashReq)
 	defer dashResp.Body.Close()
 
