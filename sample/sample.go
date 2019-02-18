@@ -16,20 +16,20 @@ type configuration struct {
 	Password string `json:"password"`
 }
 
-var Conf configuration
+var conf configuration
 
 func main() {
 	confFile := flag.String("c", "sample.conf", "config file to use")
 	flag.Parse()
-	
+
 	err := loadConfig(*confFile)
 	if err != nil {
 		log.Println("can't read conf file", *confFile)
 		saveConfig(*confFile)
 	}
 
-	auth := NeatoBotLib.Auth(Conf.MetaURL, Conf.EMail, Conf.Password)
-	dash := NeatoBotLib.GetDashboard(Conf.MetaURL, auth)
+	auth := NeatoBotLib.Auth(conf.MetaURL, conf.EMail, conf.Password)
+	dash := NeatoBotLib.GetDashboard(conf.MetaURL, auth)
 
 	for _, rob := range dash.Robots {
 		state := NeatoBotLib.GetRobotState(auth, rob)
@@ -42,22 +42,22 @@ func loadConfig(filename string) error {
 
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
-		Conf = configuration{}
+		conf = configuration{}
 		return err
 	}
 
 	err = json.Unmarshal(bytes, &DefaultConf)
 	if err != nil {
-		Conf = configuration{}
+		conf = configuration{}
 		return err
 	}
 
-	Conf = DefaultConf
+	conf = DefaultConf
 	return nil
 }
 
 func saveConfig(filename string) error {
-	bytes, err := json.MarshalIndent(Conf, "", "  ")
+	bytes, err := json.MarshalIndent(conf, "", "  ")
 	if err != nil {
 		return err
 	}

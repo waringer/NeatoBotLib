@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+// Robot holds the basic infos about an robot
 type Robot struct {
 	Serial                            string   `json:"serial"`
 	Prefix                            string   `json:"prefix"`
@@ -39,6 +40,7 @@ type robotCommand struct {
 	Command string `json:"cmd"`
 }
 
+// RobotState holds the status of an robot
 type RobotState struct {
 	Version int    `json:"version"`
 	ReqID   string `json:"reqId"`
@@ -86,11 +88,13 @@ type RobotState struct {
 	} `json:"meta"`
 }
 
+// AuthResponse holds the session infos
 type AuthResponse struct {
 	AccessToken string `json:"access_token"`
 	CurrentTime string `json:"current_time"`
 }
 
+// DashResponse holds all account infos
 type DashResponse struct {
 	ID              string  `json:"id"`
 	EMail           string  `json:"email"`
@@ -135,38 +139,40 @@ func makeAuth(rob Robot, commandData []byte) (string, string, string) {
 	return utcDate, CommandURL, authString
 }
 
+// Auth authenticate a user and start a session
 func Auth(URL string, Username string, Password string) (retValue AuthResponse) {
 	token, _ := randomHex(32)
+	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	authResp, err := client.PostForm(URL+"sessions", url.Values{"platform": {"ios"}, "email": {Username}, "token": {token}, "password": {Password}})
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	if err == nil {
+		defer authResp.Body.Close()
+		json.NewDecoder(authResp.Body).Decode(&retValue)
+	} else {
+		retValue.AccessToken = ""
+		retValue.CurrentTime = ""
 	}
-	client := &http.Client{Transport: tr}
 
-	authResp, _ := client.PostForm(URL+"sessions", url.Values{"platform": {"ios"}, "email": {Username}, "token": {token}, "password": {Password}})
-
-	defer authResp.Body.Close()
-
-	json.NewDecoder(authResp.Body).Decode(&retValue)
 	return
 }
 
+// GetDashboard retrieves infos about an account
 func GetDashboard(URL string, Auth AuthResponse) (retValue DashResponse) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-
 	dashReq, _ := http.NewRequest("GET", URL+"dashboard", nil)
 	dashReq.Header.Add("Authorization", "Token token="+Auth.AccessToken)
 
-	dashResp, _ := client.Do(dashReq)
-	defer dashResp.Body.Close()
+	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	dashResp, err := client.Do(dashReq)
 
-	json.NewDecoder(dashResp.Body).Decode(&retValue)
+	if err == nil {
+		defer dashResp.Body.Close()
+		json.NewDecoder(dashResp.Body).Decode(&retValue)
+	}
+
 	return
 }
 
+// GetRobotState returns the state of an robot
 func GetRobotState(Auth AuthResponse, rob Robot) (retValue RobotState) {
 	commandData, _ := json.Marshal(robotCommand{ID: "1", Command: "getRobotState"})
 
@@ -178,9 +184,12 @@ func GetRobotState(Auth AuthResponse, rob Robot) (retValue RobotState) {
 	CommandReq.Header.Add("Accept", "application/vnd.neato.nucleo.v1")
 
 	client := &http.Client{}
-	CommandResp, _ := client.Do(CommandReq)
-	defer CommandResp.Body.Close()
+	CommandResp, err := client.Do(CommandReq)
 
-	json.NewDecoder(CommandResp.Body).Decode(&retValue)
+	if err == nil {
+		defer CommandResp.Body.Close()
+		json.NewDecoder(CommandResp.Body).Decode(&retValue)
+	}
+
 	return
 }
