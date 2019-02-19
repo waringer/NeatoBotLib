@@ -47,8 +47,8 @@ type RobotState struct {
 	Result  string `json:"result"`
 	Error   string `json:"error"`
 	Data    string `json:"data"`
-	State   int    `json:"state"`
-	Action  int    `json:"action"`
+	State   State  `json:"state"`
+	Action  Action `json:"action"`
 
 	Cleaning struct {
 		Category   int `json:"category"`
@@ -108,6 +108,82 @@ type DashResponse struct {
 	VerifiedAt      string  `json:"verified_at"`
 	Robots          []Robot `json:"robots"`
 	RecentFirmwares string  `json:"recent_firmwares"`
+}
+
+// State type for robot status translation
+type State int
+
+// Robot status translation
+const (
+	Invalid State = 0
+	Idle    State = 1
+	Busy    State = 2
+	Paused  State = 3
+	Error   State = 4
+)
+
+func (state State) String() string {
+	names := [...]string{
+		"Invalid",
+		"Idle",
+		"Busy",
+		"Paused",
+		"Error"}
+
+	if state < Invalid || state > Error {
+		return "Invalid"
+	}
+
+	return names[state]
+}
+
+// Action type for robot action translation
+type Action int
+
+// Robot action translation
+const (
+	INVALID               Action = 0
+	HOUSE_CLEANING        Action = 1
+	SPOT_CLEANING         Action = 2
+	MANUAL_CLEANING       Action = 3
+	DOCKING               Action = 4
+	USER_MENU_ACTIVE      Action = 5
+	SUSPENDED_CLEANING    Action = 6
+	UPDATING              Action = 7
+	COPYING_LOGS          Action = 8
+	RECOVERING_LOCATION   Action = 9
+	IEC_TEST              Action = 10
+	MAP_CLEANING          Action = 11
+	EXPLORING_MAP         Action = 12
+	AQUIRING_MAP_IDS      Action = 13
+	CREATING_MAP          Action = 14
+	SUSPENDED_EXPLORATION Action = 15
+)
+
+func (action Action) String() string {
+	names := [...]string{
+		"Invalid",
+		"House Cleaning",
+		"Spot Cleaning",
+		"Manual Cleaning",
+		"Docking",
+		"User Menu Active",
+		"Suspended Cleaning",
+		"Updating",
+		"Copying Logs",
+		"Recovering Location",
+		"Iec Test",
+		"Map Cleaning",
+		"Exploring map (creating a persistent map)",
+		"Acquiring Persistent Map IDs",
+		"Creating & Uploading Map",
+		"Suspended Exploration"}
+
+	if action < INVALID || action > SUSPENDED_EXPLORATION {
+		return "Invalid"
+	}
+
+	return names[action]
 }
 
 func randomHex(n int) (string, error) {
