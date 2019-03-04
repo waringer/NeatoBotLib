@@ -202,8 +202,7 @@ func makeAuth(rob Robot, commandData []byte) (string, string, string) {
 		vendor = "vorwerk"
 	}
 
-	utcDate := time.Now().UTC().Format("Mon, 2 Jan 2006 15:04:05 GMT")
-
+	utcDate := time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT")
 	commandMessage := strings.Join([]string{strings.ToLower(rob.Serial), utcDate, string(commandData)}, "\n")
 
 	authHMAC := hmac.New(sha256.New, []byte(rob.SecretKey))
@@ -236,6 +235,7 @@ func Auth(URL string, Username string, Password string) (retValue AuthResponse) 
 func GetDashboard(URL string, Auth AuthResponse) (retValue DashResponse) {
 	dashReq, _ := http.NewRequest("GET", URL+"dashboard", nil)
 	dashReq.Header.Add("Authorization", "Token token="+Auth.AccessToken)
+	dashReq.Header.Add("Accept", "application/vnd.neato.beehive.v1+json")
 
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	dashResp, err := client.Do(dashReq)
@@ -258,8 +258,9 @@ func GetRobotState(Auth AuthResponse, rob Robot) (retValue RobotState) {
 	CommandReq.Header.Add("Date", utcDate)
 	CommandReq.Header.Add("Authorization", authString)
 	CommandReq.Header.Add("Accept", "application/vnd.neato.nucleo.v1")
+	CommandReq.Header.Add("Content-type", "application/json")
 
-	client := &http.Client{}
+	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	CommandResp, err := client.Do(CommandReq)
 
 	if err == nil {
