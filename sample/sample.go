@@ -11,9 +11,10 @@ import (
 )
 
 type configuration struct {
-	MetaURL  string `json:"URL"`
-	EMail    string `json:"eMail"`
-	Password string `json:"password"`
+	MetaURL     string `json:"URL"`
+	EMail       string `json:"eMail"`
+	Password    string `json:"password"`
+	OAuth2Token string `json:"OAuth2Token"`
 }
 
 var conf configuration
@@ -29,6 +30,10 @@ func main() {
 	}
 
 	auth := NeatoBotLib.Auth(conf.MetaURL, conf.EMail, conf.Password)
+	if auth.AccessToken == "" {
+		auth = NeatoBotLib.OAuth2Token(conf.OAuth2Token)
+	}
+
 	dash := NeatoBotLib.GetDashboard(conf.MetaURL, auth)
 
 	for _, rob := range dash.Robots {

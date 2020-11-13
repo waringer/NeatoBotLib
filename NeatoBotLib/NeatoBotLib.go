@@ -92,6 +92,7 @@ type RobotState struct {
 type AuthResponse struct {
 	AccessToken string `json:"access_token"`
 	CurrentTime string `json:"current_time"`
+	OAuth2      bool   `json:"OAuth2"`
 }
 
 // DashResponse holds all account infos
@@ -226,15 +227,30 @@ func Auth(URL string, Username string, Password string) (retValue AuthResponse) 
 	} else {
 		retValue.AccessToken = ""
 		retValue.CurrentTime = ""
+		retValue.OAuth2 = false
 	}
 
+	return
+}
+
+// OAuth2Token sets Preauthenticated token for OAuth2
+func OAuth2Token(Token string) (retValue AuthResponse) {
+	retValue.AccessToken = Token
+	retValue.CurrentTime = ""
+	retValue.OAuth2 = true
 	return
 }
 
 // GetDashboard retrieves infos about an account
 func GetDashboard(URL string, Auth AuthResponse) (retValue DashResponse) {
 	dashReq, _ := http.NewRequest("GET", URL+"dashboard", nil)
-	dashReq.Header.Add("Authorization", "Token token="+Auth.AccessToken)
+
+	if Auth.OAuth2 {
+		dashReq.Header.Add("Authorization", "Auth0Bearer "+Auth.AccessToken)
+	} else {
+		dashReq.Header.Add("Authorization", "Token token="+Auth.AccessToken)
+	}
+
 	dashReq.Header.Add("Accept", "application/vnd.neato.beehive.v1+json")
 
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
