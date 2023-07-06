@@ -95,22 +95,6 @@ type AuthResponse struct {
 	OAuth2      bool   `json:"OAuth2"`
 }
 
-// DashResponse holds all account infos
-type DashResponse struct {
-	ID              string  `json:"id"`
-	EMail           string  `json:"email"`
-	FirstName       string  `json:"first_name"`
-	LastName        string  `json:"last_name"`
-	Locale          string  `json:"locale"`
-	CountryCode     string  `json:"country_code"`
-	Developer       string  `json:"developer"`
-	Newsletter      string  `json:"newsletter"`
-	CreatedAt       string  `json:"created_at"`
-	VerifiedAt      string  `json:"verified_at"`
-	Robots          []Robot `json:"robots"`
-	RecentFirmwares string  `json:"recent_firmwares"`
-}
-
 // State type for robot status translation
 type State int
 
@@ -241,9 +225,9 @@ func OAuth2Token(Token string) (retValue AuthResponse) {
 	return
 }
 
-// GetDashboard retrieves infos about an account
-func GetDashboard(URL string, Auth AuthResponse) (retValue DashResponse) {
-	dashReq, _ := http.NewRequest("GET", URL+"dashboard", nil)
+// GetRobots retrieves infos about all robots
+func GetRobots(URL string, Auth AuthResponse) (retValue []Robot) {
+	dashReq, _ := http.NewRequest("GET", URL+"users/me/robots", nil)
 
 	if Auth.OAuth2 {
 		dashReq.Header.Add("Authorization", "Auth0Bearer "+Auth.AccessToken)
